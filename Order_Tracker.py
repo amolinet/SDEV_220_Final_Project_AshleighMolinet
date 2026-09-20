@@ -1,31 +1,57 @@
 #Created by Ashleigh Molinet
 #Title: Order_Tracker
 #Created on 2026-09-12
-#Last Modified:
+#Last Modified: 2026-09-19
+
+
+#pseudo code
+    #use at least 3 classes
+    # create at least 4 buttons on main window
+    # app should include 3 windows
+    #should be able to create, update, and view orders
+    # buttons on each page for returning to home window and exiting the app
+#classes
+    # main_window_class
+    # Recent_orders_window
 
 import tkinter as tk
-root = tk.Tk() 
+import pandas as pd
+import os
 
-root.title('Order Tracker')
-root.geometry('400x800')
+class OrderWindow(tk.Toplevel):
+    def __init__(self, master = None):
+        super().__init__(master)
+        self.title("New Orders Window")
+        self.geometry("1200x1200")
+        self.configure(bg='gold')
 
-class Orders:
-    def __init__(self, Order_ID):
-        self.Order_ID = Order_ID
+        tk.Label(self, text='Enter new order information here.').pack(pady=20)
 
-class Labs:
-    def __init__(self, lab_name):
-        self.lab_name = lab_name
+class ExcelWindow(tk.Toplevel):
+    def __init__(self, master = None):
+        super().__init__(master)
+        self.title("Recent Orders Window")
+        self.geometry("1200x1200")
+        self.configure(bg='Maroon')
 
-class Order_Details(Orders, Labs):
-    def __init__(self):
-        super.__init__()
-        self.Order_status = input('Order_status')
-        self.Estimated_Cost = float(input('Estimated_Cost'))
-        self.Username = input('Username')
-        self.Date_Submitted = input('Date_Submitted')
+        tk.Label(self, text='10 Most Recent Orders.').pack(pady=20)
 
-stop_button = tk.Button(root, text="Stop", width=25, command=root.destroy) #creates button that kills window
-stop_button.pack() #places button in the window
 
-root.mainloop() #runs window/
+root_window = tk.Tk()
+root_window.configure(bg = 'midnight blue')
+root_window.geometry('1200x1200')
+root_window.title('Home Screen')
+tk.Label(root_window, text='This is the home screen').pack(pady=10)
+
+#buttons
+new_order_btn = tk.Button(root_window, text = 'New Orders')
+new_order_btn.bind("<Button>", lambda e: OrderWindow(root_window))
+new_order_btn.pack(pady=10)
+recent_orders_btn = tk.Button(root_window, text = 'Recent Orders')
+recent_orders_btn.bind("<Button>", lambda e: ExcelWindow(root_window))
+recent_orders_btn.pack(pady=10)
+
+
+
+
+root_window.mainloop()
