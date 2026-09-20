@@ -11,12 +11,13 @@
     #should be able to create, update, and view orders
     # buttons on each page for returning to home window and exiting the app
 #classes
-    # main_window_class
-    # Recent_orders_window
+    # OrderWindow
+    # ExcelWindow
 
 import tkinter as tk
 import pandas as pd
 import os
+import openpyxl as opy
 
 class OrderWindow(tk.Toplevel):
     def __init__(self, master = None):
@@ -27,6 +28,8 @@ class OrderWindow(tk.Toplevel):
 
         tk.Label(self, text='Enter new order information here.').pack(pady=20)
 
+        
+
 class ExcelWindow(tk.Toplevel):
     def __init__(self, master = None):
         super().__init__(master)
@@ -35,6 +38,18 @@ class ExcelWindow(tk.Toplevel):
         self.configure(bg='Maroon')
 
         tk.Label(self, text='10 Most Recent Orders.').pack(pady=20)
+
+    # def open_excel_file():
+    #     df = pd.read_excel('Order_Tracker_Data.xlsx')
+    #     tree['columns'] = list(df.columns)
+    #     tree['show']= 'headings'
+
+    #     for column in df.columns:
+    #         tree.heading(column, text=column)
+    #         tree.column(column, width=120, anchor='w')
+    #     df_rows = df.to_numpy().tolist()
+    #     for rows in df_rows:
+    #         clean_row = []
 
 
 root_window = tk.Tk()
