@@ -31,6 +31,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 import pandas as pd
+import re
 import os
 import openpyxl as opy
 from datetime import datetime
@@ -115,12 +116,47 @@ class OrderWindow(tk.Toplevel):
         if not all(order.values()):
             self.message.config(text='Please complete every field.', fg='red')
             return
+        
+        #validates unique order ID, AI used to debug
+        order_id = order["Order ID"].strip().upper()
+        if not re.fullmatch(r"SR-\d{4}", order_id):
+            self.message.config(
+                text="Order ID must use the format SR-0001.",
+                fg="red",
+            )
+            return
+        
+        order["Order ID"] = order_id
 
         # AI used to help with file/error handling. 
         filename = 'Order_Tracker_Data.xlsx'
         try:
             if os.path.exists(filename):
                 existing = pd.read_excel(filename)
+
+                #checks for duplicate IDs, AI used to debug
+                existing = pd.read_excel(filename, dtype={"Order ID": str})
+                
+                if "Order ID" not in existing.columns:
+                    self.message.config(text="Workbook is missing the Order ID column.", fg="red")
+                    return
+                
+                existing_ids = (
+                    existing["Order ID"]
+                    .fillna("")
+                    .astype(str)
+                    .str.strip()
+                    .str.upper()
+                )
+                
+                if existing_ids.eq(order_id).any():
+                    self.message.config(
+                        text=f"Order ID {order_id} already exists.",
+                        fg="red",
+                    )
+                    return
+
+                #saves and appends fields in excel
                 columns = list(existing.columns)
                 for field in order:
                     if field not in columns:
