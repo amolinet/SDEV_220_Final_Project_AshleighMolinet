@@ -1,7 +1,7 @@
 #Created by Ashleigh Molinet
 #Title: Order_Tracker
 #Created on 2026-09-12
-#Last Modified: 2026-09-19
+#Last Modified: 2026-09-26
 # All ideas are my own, however, AI was used in the course of this project to help debug. AI model used is the Co-Pilot Github agent.
 # Sometimes AI was used in an earlier iteration of the code in order to brainstorm layouts but was later replaced with my own code. 
     #any AI code incorporated has be throughougly reviewed for accuracy and relevance to this Order Tracking Application.
@@ -276,7 +276,7 @@ class ExcelWindow(tk.Toplevel):
                 "Unable to remove order", f"Failed to update Excel file: {e}", parent=self
             )
 
-    
+
 
 
 
