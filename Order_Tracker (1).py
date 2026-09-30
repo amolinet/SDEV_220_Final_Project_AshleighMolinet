@@ -33,7 +33,6 @@ from tkinter import messagebox
 import pandas as pd
 import re
 import os
-import openpyxl as opy
 from datetime import datetime
 
 
@@ -105,9 +104,9 @@ class OrderWindow(tk.Toplevel):
         #buttons for saving order, returning to root screen and killing the app.
         save_btn = tk.Button(controls, text='Save Order', command=self.save_order)
         save_btn.pack(side ='left', padx= 5)
-        home_btn = tk.Button(controls, text='Home', command=self.destroy)
+        home_btn = tk.Button(controls, text='Home Screen', command=self.destroy)
         home_btn.pack(side='left', padx=5 )
-        exit_btn = tk.Button(controls, text='Exit', command=self.master.destroy)
+        exit_btn = tk.Button(controls, text='Exit Application', command=self.master.destroy)
         exit_btn.pack(side='left', padx=5)
 
     def save_order(self):
@@ -220,21 +219,19 @@ class ExcelWindow(tk.Toplevel):
         delet_line_btn = tk.Button(controls, text="Remove Selected", command=self.remove_selected_line)
         delet_line_btn.pack(side="left", padx=5)
        
-        new_order_scr_btn = tk.Button(
-            controls,
-            text="Add Another Order",
-            command=lambda: OrderWindow(self.master),
-        )
+        new_order_scr_btn = tk.Button(controls, text="Add Another Order",   command=lambda: OrderWindow(self.master))
         new_order_scr_btn.pack(side="left", padx=5)
 
         home_btn = tk.Button(controls, text="Home", command=self.destroy)
         home_btn.pack(side="left", padx=5)
 
-        exit_btn = tk.Button(
-            controls, text="Exit", command=self.master.destroy
-        )
+        exit_btn = tk.Button(controls, text="Exit", command=self.master.destroy)
         exit_btn.pack(side="left", padx=5)
-
+       
+        update_orders_btn = tk.Button(controls, text="Update Selected", command=self.update_selected_order) #AI used to debug
+        update_orders_btn.pack(pady=10)
+        
+        
         # Automatically call the load method when window opens
         self.load_orders()
 
@@ -277,21 +274,28 @@ class ExcelWindow(tk.Toplevel):
             self.status_label.config(text=f"Error: {filename} not found")
         except Exception as e:
             self.status_label.config(text=f"Error: {str(e)}")
+    
+    def update_selected_order(self):
+            selected_items = self.tree.selection()
+            if len(selected_items) != 1:
+                messagebox.showwarning( "Select one order","Please select exactly one order to update.", parent=self,)
+                return
+            try:
+                row_index = int(selected_items[0])
+                df = pd.read_excel("Order_Tracker_Data.xlsx", dtype={"Order ID": str})
+                OrderUpdateWindow(self, row_index, df.iloc[row_index].to_dict())
+            except (OSError, ValueError, IndexError) as error:
+                messagebox.showerror("Unable to open order", str(error), parent=self)
+
 
     def remove_selected_line(self):
         selected_items = self.tree.selection()
 
         if not selected_items:
-            messagebox.showwarning(
-                "No selection", "Please select a line to remove.", parent=self
-            )
+            messagebox.showwarning( "No selection", "Please select a line to remove.", parent=self)
             return
 
-        confirm = messagebox.askyesno(
-            "Confirm deletion",
-            "Are you sure you want to delete the selected line(s)?",
-            parent=self,
-        )
+        confirm = messagebox.askyesno( "Confirm deletion", "Are you sure you want to delete the selected line(s)?", parent=self,)
         if not confirm:
             return
 
@@ -304,36 +308,81 @@ class ExcelWindow(tk.Toplevel):
             df.to_excel("Order_Tracker_Data.xlsx", index=False)
 
             self.load_orders()
-            messagebox.showinfo(
-                "Order removed", "Selected line(s) successfully removed from Excel.", parent=self
-            )
+            messagebox.showinfo( "Order removed", "Selected line(s) successfully removed from Excel.", parent=self)
         except Exception as e:
-            messagebox.showerror(
-                "Unable to remove order", f"Failed to update Excel file: {e}", parent=self
-            )
+            messagebox.showerror("Unable to remove order", f"Failed to update Excel file: {e}", parent=self )
+            
+class OrderUpdateWindow(tk.Toplevel):
+    def __init__(self, master, row_index, order):
+        super().__init__(master)
+        self.title('Update An Order')
+        self.geometry('1200x600')
+        self.configure(bg='lavender')
+        self.row_index = row_index
+        self.original_order_id = str(order.get('Order ID'))
+        self.entries = {} #initializes an empty dictionary so that we can use a loop later
 
+        #create the update form frame
+        tk.Label(self, text=f'Update Order ID: {self.original_order_id}')
+        update_form_frame = tk.Frame(self, bg='lavender')
+        update_form_frame.pack(pady=5)
 
+        for field, value in order.items():
+            tk.Label(update_form_frame, text=field, bg='lavender').pack()
+            form_entry = tk.Entry(update_form_frame, width=35)
+            form_entry.insert(0, "" if pd.isna(value) else str(value)) # checks for missing or null values and leaves blank instead of filling with nan
+            form_entry.pack()
+            self.entries[field] = form_entry
 
+        self.message = tk.Label(self, text="", fg="red", bg='lavender')
+        self.message.pack(pady=(10, 0))
 
+        controls = tk.Frame(self, bg="lavender")
+        controls.pack(pady=8)
+        tk.Button(controls, text="Save Changes", command=self.save_changes).pack(side="left", padx=5)
+        tk.Button(controls, text="Cancel", command=self.destroy).pack(side="left", padx=5)
 
+    def save_changes(self):
+        updated = {field: entry.get().strip() for field, entry in self.entries.items()}
+        if not all(updated.values()):
+            self.message.config(text="Please complete every field.", fg="red")
+            return
+        if updated.get("Order ID", "").strip().upper() != self.original_order_id.strip().upper():
+            self.message.config(text="Order ID cannot be changed.", fg="red")
+            return
 
+        try:
+            filename = "Order_Tracker_Data.xlsx"
+            df = pd.read_excel(filename, dtype={"Order ID": str})
+            if self.row_index not in df.index:
+                raise IndexError("The selected order no longer exists.")
+            for field, value in updated.items():
+                df.at[self.row_index, field] = value
+            df.at[self.row_index, "Date Modified"] = datetime.now()
+            df.to_excel(filename, index=False)
+            self.message.config(text="Order updated successfully.", fg="green")
+        except (OSError, ValueError, IndexError) as error:
+            self.message.config(text=f"Unable to update order: {error}", fg="red")
+            return
 
-root_window = tk.Tk()
+#Creates the home screen
+root_window= tk.Tk()
 root_window.configure(bg = 'midnight blue')
 root_window.geometry('1200x1200')
 root_window.title('Home Screen')
 tk.Label(root_window, text='Welcome to the Order Tracking App! \nPlease click one of the buttons to get started.',
           fg='white', bg='midnight blue', font=('Arial', 22)).pack(pady=10)
 
-#buttons
-new_order_btn = tk.Button(root_window, text = 'New Orders')
-new_order_btn.bind("<Button>", lambda e: OrderWindow(root_window))
+# navigation buttons
+new_order_btn = tk.Button(root_window, text = 'New Orders', command=lambda: OrderWindow(root_window))
 new_order_btn.pack(pady=10)
-recent_orders_btn = tk.Button(root_window, text = 'Recent Orders')
-recent_orders_btn.bind("<Button>", lambda e: ExcelWindow(root_window))
+
+recent_orders_btn = tk.Button(root_window, text = 'Recent Orders', command=lambda: ExcelWindow(root_window))
 recent_orders_btn.pack(pady=10)
 
+update_orders_btn = tk.Button(root_window, text = 'Update an Order', command=lambda: ExcelWindow(root_window))
+update_orders_btn.pack(pady=10)
 
 
-
+#calls program
 root_window.mainloop()
