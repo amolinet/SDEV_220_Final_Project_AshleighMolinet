@@ -5,15 +5,15 @@
 # All ideas are my own, however, AI was used in the course of this project to help debug. AI model used is the Co-Pilot Github agent.
 # Sometimes AI was used in an earlier iteration of the code in order to brainstorm layouts but was later replaced with my own code. 
     #any AI code incorporated has be throughougly reviewed for accuracy and relevance to this Order Tracking Application.
-        #AI used at lines 70-75
-        #AI used in code block at 103 -123
-        #AI used in ExcelWindow class
+    # AI Generated code will be noted by a comment next to the line/s it was used on or at the start of a code.
+
 #Sources: 
     # Coding Assistance Previous Project: https://github.com/amolinet/SDEV140_FinalProject/blob/main/MolinetAshleighFinalProject.py A previous project using tkinter. Helped with setting up window classes
     # Coding Assistance Website: https://www.youtube.com/watch?v=8m4uDS_nyCk  
                                 # and https://www.tutorialspoint.com/article/how-to-open-an-excel-spreadsheet-in-treeview-widget-in-tkinter 
                                 # used to help with treeview
     # Coding Assistance Website: https://www.youtube.com/watch?v=fvIThtPt6Nc helped with creating data entry form
+    # Ruff extension used to check style and format code
 
 #pseudo code
     #use at least 3 classes
@@ -27,16 +27,16 @@
     # ExcelWindow
     # OrderUpdateWindow
 
-import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
-import pandas as pd
-import re
 import os
+import re
+import tkinter as tk
 from datetime import datetime
+from tkinter import messagebox, ttk
+from PIL import Image, ImageTk
+
+import pandas as pd
 
 
-#creates a window called "new orders"
 class OrderWindow(tk.Toplevel):
     def __init__(self, master = None):
         super().__init__(master)
@@ -92,7 +92,7 @@ class OrderWindow(tk.Toplevel):
             "Lab Group": lab_group_combobox,
             "Order Status": order_status_combobox,
         }
-       
+#------------------------------------------------------------------       
         self.message = tk.Label(self, text='', bg='gold')
         self.message.pack(pady=5)
 
@@ -108,31 +108,37 @@ class OrderWindow(tk.Toplevel):
         home_btn.pack(side='left', padx=5 )
         exit_btn = tk.Button(controls, text='Exit Application', command=self.master.destroy)
         exit_btn.pack(side='left', padx=5)
+        recent_orders_btn = tk.Button(controls, text = 'Recent Orders', command=lambda: ExcelWindow(self.master))
+        recent_orders_btn.pack(pady=10)
 
     def save_order(self):
-        '''Append the order to the excel workbook'''
-        order = {field: entry.get().strip() for field, entry in self.entries.items()}
+        self.collect_data()
+
+    def collect_data(self):
+        order = {
+            "Order ID": self.entries["Order ID"].get().strip(),
+            "User Name": self.entries["User Name"].get().strip(),
+            "Date Order Submitted": self.entries["Date Order Submitted"].get().strip(),
+            "Cost": self.entries["Cost"].get().strip(),
+            "Lab Group": self.entries["Lab Group"].get().strip(),
+            "Order Status": self.entries["Order Status"].get().strip(),
+        }
+
         if not all(order.values()):
-            self.message.config(text='Please complete every field.', fg='red')
+            self.message.config(text="Please complete every field.", fg="red")
             return
-        
+
         #validates unique order ID, AI used to debug
         order_id = order["Order ID"].strip().upper()
         if not re.fullmatch(r"SR-\d{4}", order_id):
-            self.message.config(
-                text="Order ID must use the format SR-0001.",
-                fg="red",
-            )
+            self.message.config (text="Order ID must use the format SR-0001.",fg="red",)
             return
-        
         order["Order ID"] = order_id
-
+#--------------------------------------------------------------------------------------------------
         # AI used to help with file/error handling. 
         filename = 'Order_Tracker_Data.xlsx'
         try:
             if os.path.exists(filename):
-                existing = pd.read_excel(filename)
-
                 #checks for duplicate IDs, AI used to debug
                 existing = pd.read_excel(filename, dtype={"Order ID": str})
                 
@@ -173,7 +179,7 @@ class OrderWindow(tk.Toplevel):
         for entry in self.entries.values():
             entry.delete(0, tk.END)
         
-#AI used to help with configuring Treeview in a more pleasing way, debugged my loop in def load_orders
+#AI used to help with configuring Treeview in a more pleasing way, debugged my loop in show_orders
 class ExcelWindow(tk.Toplevel):
 
     def __init__(self, master=None):
@@ -203,23 +209,23 @@ class ExcelWindow(tk.Toplevel):
         )
         self.tree.pack(fill="both", expand=True)
 
-        # Configure scrollbar commands
+        
         vert_scrollbar.config(command=self.tree.yview)
         horz_scrollbar.config(command=self.tree.xview)
 
-        # Status Label
+        
         self.status_label = tk.Label(self, text="", bg="maroon", fg="white")
         self.status_label.pack(pady=(0, 10))
 
-        # Frame for control buttons
+        
         controls = tk.Frame(self, bg="maroon")
         controls.pack(pady=10)
 
-        # Buttons 
-        delet_line_btn = tk.Button(controls, text="Remove Selected", command=self.remove_selected_line)
+         
+        delet_line_btn = tk.Button(controls, text="Remove Selected", command=self.delete_order)
         delet_line_btn.pack(side="left", padx=5)
        
-        new_order_scr_btn = tk.Button(controls, text="Add Another Order",   command=lambda: OrderWindow(self.master))
+        new_order_scr_btn = tk.Button(controls, text="Add Another Order",   command=lambda: OrderWindow(self))
         new_order_scr_btn.pack(side="left", padx=5)
 
         home_btn = tk.Button(controls, text="Home", command=self.destroy)
@@ -228,15 +234,14 @@ class ExcelWindow(tk.Toplevel):
         exit_btn = tk.Button(controls, text="Exit", command=self.master.destroy)
         exit_btn.pack(side="left", padx=5)
        
-        update_orders_btn = tk.Button(controls, text="Update Selected", command=self.update_selected_order) #AI used to debug
+        update_orders_btn = tk.Button(controls, text="Update Selected", command=self.updateOrder) #AI used to debug
         update_orders_btn.pack(pady=10)
         
         
-        # Automatically call the load method when window opens
-        self.load_orders()
+        
+        self.show_orders()
 
-    def load_orders(self):
-        """Loads the ten newest rows from the order_tracker excel file"""
+    def show_orders(self):
         filename = "Order_Tracker_Data.xlsx"
 
         try:
@@ -252,33 +257,30 @@ class ExcelWindow(tk.Toplevel):
             self.tree["columns"] = columns
             self.tree["show"] = "headings"
 
-            # Sets column headings and width
+            
             for col in columns:
                 self.tree.heading(col, text=col)
                 self.tree.column(col, width=120, anchor="w")
 
             # GET LAST 10 ROWS: Grab the tail end of the dataframe
-            # We reverse it if you want the absolute newest at the very top
             df_last_10 = df.tail(10)
 
             # Insert data into Treeview
             for index, row in df_last_10.iterrows():
                 self.tree.insert("", "end", iid=str(index), values=tuple(row))
-
-            # Update status using correct instance variable reference
             self.status_label.config(text=f"Loaded last 10 entries from: {filename}")
 
         except ValueError:
             self.status_label.config(text="Error: Invalid file format")
         except FileNotFoundError:
             self.status_label.config(text=f"Error: {filename} not found")
-        except Exception as e:
-            self.status_label.config(text=f"Error: {str(e)}")
+        except Exception as e:  # noqa: BLE001
+            self.status_label.config(text=f"Error: {e!s}") #Ruff used for formatting
     
-    def update_selected_order(self):
+    def updateOrder(self):
             selected_items = self.tree.selection()
             if len(selected_items) != 1:
-                messagebox.showwarning( "Select one order","Please select exactly one order to update.", parent=self,)
+                messagebox.showwarning( "Select one order to update.", parent=self,)
                 return
             try:
                 row_index = int(selected_items[0])
@@ -288,14 +290,14 @@ class ExcelWindow(tk.Toplevel):
                 messagebox.showerror("Unable to open order", str(error), parent=self)
 
 
-    def remove_selected_line(self):
+    def delete_order(self):
         selected_items = self.tree.selection()
 
         if not selected_items:
-            messagebox.showwarning( "No selection", "Please select a line to remove.", parent=self)
+            messagebox.showwarning( "Please choose a line to remove.", parent=self)
             return
 
-        confirm = messagebox.askyesno( "Confirm deletion", "Are you sure you want to delete the selected line(s)?", parent=self,)
+        confirm = messagebox.askyesno("Are you sure you want to delete the selected line?", parent=self,)
         if not confirm:
             return
 
@@ -307,10 +309,10 @@ class ExcelWindow(tk.Toplevel):
 
             df.to_excel("Order_Tracker_Data.xlsx", index=False)
 
-            self.load_orders()
-            messagebox.showinfo( "Order removed", "Selected line(s) successfully removed from Excel.", parent=self)
-        except Exception as e:
-            messagebox.showerror("Unable to remove order", f"Failed to update Excel file: {e}", parent=self )
+            self.show_orders()
+            messagebox.showinfo( "Order removed", "Selected line successfully removed from Excel!", parent=self)
+        except Exception as e:  # noqa: BLE001
+            messagebox.showerror(f"Failed to update Excel file: {e}", parent=self )
             
 class OrderUpdateWindow(tk.Toplevel):
     def __init__(self, master, row_index, order):
@@ -320,20 +322,60 @@ class OrderUpdateWindow(tk.Toplevel):
         self.configure(bg='lavender')
         self.row_index = row_index
         self.original_order_id = str(order.get('Order ID'))
-        self.entries = {} #initializes an empty dictionary so that we can use a loop later
 
         #create the update form frame
         tk.Label(self, text=f'Update Order ID: {self.original_order_id}')
         update_form_frame = tk.Frame(self, bg='lavender')
         update_form_frame.pack(pady=5)
 
-        for field, value in order.items():
-            tk.Label(update_form_frame, text=field, bg='lavender').pack()
-            form_entry = tk.Entry(update_form_frame, width=35)
-            form_entry.insert(0, "" if pd.isna(value) else str(value)) # checks for missing or null values and leaves blank instead of filling with nan
-            form_entry.pack()
-            self.entries[field] = form_entry
+        order_id_label = tk.Label(update_form_frame, text='Order ID(SR-000#)', bg='lavender')
+        order_id_label.pack()
+        order_id_entry = tk.Entry(update_form_frame, width=30)
+        order_id_entry.pack(pady=5)
+       
+        user_label = tk.Label(update_form_frame, text='Modified By', bg='lavender')
+        user_label.pack()
+        user_entry = tk.Entry(update_form_frame, width=30)
+        user_entry.pack(pady=5)
+       
+        order_date_label = tk.Label(update_form_frame, text='Date Order Submitted', bg='lavender')
+        order_date_label.pack()
+        order_date_entry = tk.Entry(update_form_frame, width=30)
+        order_date_entry.pack(pady=5)
 
+        cost_label = tk.Label(update_form_frame, text='Cost($XXX,XXX)', bg='lavender')
+        cost_label.pack()
+        cost_entry = tk.Entry(update_form_frame, width=30)
+        cost_entry.pack(pady=5)
+
+        lab_group_label = tk.Label(update_form_frame, text='Lab Group', bg='lavender')
+        lab_group_label.pack()
+        lab_group_combobox = ttk.Combobox(update_form_frame, values = ['HPLC', 'LC/MS', 'ICP/MS', 'GC', 'Wet Chem', 'Micro'])
+        lab_group_combobox.pack(pady=5)
+
+        order_status = tk.Label(update_form_frame, text='Order Status', bg='lavender')
+        order_status.pack()
+        order_status_combobox = ttk.Combobox(update_form_frame, values = ['Pending Approval', 'Approved - Ordered', 'Approved - Partially Recieved', 'Closed', 'Rejected', 'Revision Requested'])
+        order_status_combobox.pack(pady=5)
+
+        #AI generated code block. Used to autofill the form with the selected order
+        self.entries = {
+            'Order ID': order_id_entry,
+            "Modified By": user_entry,
+            'Date Order Submitted': order_date_entry,
+            'Cost': cost_entry,
+            'Lab Group': lab_group_combobox,
+            'Order Status': order_status_combobox,
+        }
+        for field, entry in self.entries.items():
+            value = order.get(field, '')
+            if pd.isna(value):
+                value = ''
+            if isinstance(entry, ttk.Combobox):
+                entry.set(str(value))
+            else:
+                entry.insert(0, str(value))
+ # -----------------------------------------------------------------------------
         self.message = tk.Label(self, text="", fg="red", bg='lavender')
         self.message.pack(pady=(10, 0))
 
@@ -358,12 +400,15 @@ class OrderUpdateWindow(tk.Toplevel):
                 raise IndexError("The selected order no longer exists.")
             for field, value in updated.items():
                 df.at[self.row_index, field] = value
-            df.at[self.row_index, "Date Modified"] = datetime.now()
+            df.at[self.row_index, "Date Modified"] = datetime.now()  # noqa: DTZ005
             df.to_excel(filename, index=False)
             self.message.config(text="Order updated successfully.", fg="green")
         except (OSError, ValueError, IndexError) as error:
             self.message.config(text=f"Unable to update order: {error}", fg="red")
-            return
+
+        if hasattr(self.master, 'show_orders'):
+            self.master.show_orders()
+        self.destroy()
 
 #Creates the home screen
 root_window= tk.Tk()
@@ -372,6 +417,7 @@ root_window.geometry('1200x1200')
 root_window.title('Home Screen')
 tk.Label(root_window, text='Welcome to the Order Tracking App! \nPlease click one of the buttons to get started.',
           fg='white', bg='midnight blue', font=('Arial', 22)).pack(pady=10)
+# home_page_image = Image.open('order_tracker_gif.gif')
 
 # navigation buttons
 new_order_btn = tk.Button(root_window, text = 'New Orders', command=lambda: OrderWindow(root_window))
@@ -380,8 +426,6 @@ new_order_btn.pack(pady=10)
 recent_orders_btn = tk.Button(root_window, text = 'Recent Orders', command=lambda: ExcelWindow(root_window))
 recent_orders_btn.pack(pady=10)
 
-update_orders_btn = tk.Button(root_window, text = 'Update an Order', command=lambda: ExcelWindow(root_window))
-update_orders_btn.pack(pady=10)
 
 
 #calls program
