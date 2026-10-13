@@ -32,7 +32,6 @@ import re
 import tkinter as tk
 from datetime import datetime
 from tkinter import messagebox, ttk
-from PIL import Image, ImageTk
 
 import pandas as pd
 
@@ -130,8 +129,8 @@ class OrderWindow(tk.Toplevel):
 
         #validates unique order ID, AI used to debug
         order_id = order["Order ID"].strip().upper()
-        if not re.fullmatch(r"SR-\d{4}", order_id):
-            self.message.config (text="Order ID must use the format SR-0001.",fg="red",)
+        if not re.fullmatch(r"SR-000\d+", order_id):
+            self.message.config (text="Order ID must use the format SR-000XX.",fg="red",)
             return
         order["Order ID"] = order_id
 #--------------------------------------------------------------------------------------------------
@@ -294,10 +293,14 @@ class ExcelWindow(tk.Toplevel):
         selected_items = self.tree.selection()
 
         if not selected_items:
-            messagebox.showwarning( "Please choose a line to remove.", parent=self)
+            messagebox.showwarning("No order selected", "Please choose a line to remove.", parent=self)
             return
 
-        confirm = messagebox.askyesno("Are you sure you want to delete the selected line?", parent=self,)
+        confirm = messagebox.askyesno(
+            "Confirm deletion",
+            "Are you sure you want to delete the selected line?",
+            parent=self,
+        )
         if not confirm:
             return
 
@@ -310,9 +313,9 @@ class ExcelWindow(tk.Toplevel):
             df.to_excel("Order_Tracker_Data.xlsx", index=False)
 
             self.show_orders()
-            messagebox.showinfo( "Order removed", "Selected line successfully removed from Excel!", parent=self)
-        except Exception as e:  # noqa: BLE001
-            messagebox.showerror(f"Failed to update Excel file: {e}", parent=self )
+            messagebox.showinfo("Order removed", "Selected line successfully removed from Excel!", parent=self)
+        except Exception as e:  
+            messagebox.showerror("Failed to update Excel file", str(e), parent=self)
             
 class OrderUpdateWindow(tk.Toplevel):
     def __init__(self, master, row_index, order):
