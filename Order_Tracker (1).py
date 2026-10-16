@@ -40,7 +40,7 @@ class OrderWindow(tk.Toplevel):
     def __init__(self, master = None):
         super().__init__(master)
         self.title("New Orders Window")
-        self.geometry("500x450")
+        self.geometry("1200x1200")
         self.configure(bg='gold')
 
         tk.Label(self, text='Enter new order information here.', bg='gold').pack(pady=20)
@@ -50,6 +50,9 @@ class OrderWindow(tk.Toplevel):
         #form frame
         form_frame = tk.Frame(self, bg='gold')
         form_frame.pack(pady=10)
+        image_path = os.path.join(os.path.dirname(__file__), 'clipboard.png.png')
+        self.clipboard_png = tk.PhotoImage(file=image_path).subsample(4, 4)
+        tk.Label(form_frame, image=self.clipboard_png, bg='gold').pack(anchor='w')
         
         #form widgets
         order_id_label = tk.Label(form_frame, text='Order ID(SR-000#)', bg='gold')
@@ -416,11 +419,13 @@ class OrderUpdateWindow(tk.Toplevel):
 #Creates the home screen
 root_window= tk.Tk()
 root_window.configure(bg = 'midnight blue')
-root_window.geometry('1200x1200')
+root_window.geometry('1000x1000')
 root_window.title('Home Screen')
 tk.Label(root_window, text='Welcome to the Order Tracking App! \nPlease click one of the buttons to get started.',
           fg='white', bg='midnight blue', font=('Arial', 22)).pack(pady=10)
-# home_page_image = Image.open('order_tracker_gif.gif')
+home_page_image = tk.PhotoImage(file='order_tracker_gif.gif').subsample(2, 2)
+tk.Label(root_window, image=home_page_image, bg='midnight blue').pack(pady=10)
+
 
 # navigation buttons
 new_order_btn = tk.Button(root_window, text = 'New Orders', command=lambda: OrderWindow(root_window))
