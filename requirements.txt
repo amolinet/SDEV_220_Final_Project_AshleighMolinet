@@ -1,0 +1,29 @@
+Order_Tracker uses the following dependencies:
+- Os
+- Pandas
+- Tkinter, tkinter.ttk, tkinter.messagebox
+- Re
+- Datetime
+
+Please ensure that you have these dependencies installed in your Python environment. You can install them using pip if they are not already available. 
+For example, you can run the following command to install Pandas: pip install pandas
+
+Image files are included in the project directory and are used in the GUI for visual appeal, however they are not required to run the application.
+Included in the project directory are the following image files:
+- clipboard.png.png
+- order_tracker_gif.gif
+
+Also included in the project directory are two excel files :
+- one is used to store the order data and the other contains test data
+- Order_Tracker_Data.xlsx is blank and is used to store the order data. It does not need to be downloaded for the program to work. 
+    - The program will create this file if it does not exist when the program is run.
+-Order_Tracker Test Scripts.xlsx contains test data and is used to test the program. 
+    - It does not need to be downloaded for the program to work.
+
+Other files included in the project directory are:
+- AshleighMolinet_Final_Project_Launch.docx which contains the scope of the project.
+- Final_Project_MockUp.ppt which contains a mockup of the GUI.
+- UML_Diagram.png which contains a UML diagram of the program.
+- README.md which contains instructions on how to run the program.
+- Order_Tracker (1).py which is the main program file.
+
